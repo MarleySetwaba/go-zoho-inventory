@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exclusive Deals - Your Parts Await!</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            width: 80%;
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            letter-spacing: 1px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .section-title {
+            color: #6a11cb;
+            border-bottom: 2px solid #6a11cb;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .product-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .product-item img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        .product-item h3 {
+            margin: 10px 0 5px;
+            color: #333;
+        }
+        .product-item p {
+            color: #666;
+            margin: 5px 0;
+        }
+        .product-item .price {
+            font-weight: bold;
+            color: #6a11cb;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #2575fc;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .contact {
+            padding: 15px;
+            text-align: center;
+        }
+
+        .contact h3 {
+            margin: 10px 0 5px;
+            color: #333;
+        }
+        .contact p {
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #f0f0f0;
+            font-size: 0.8em;
+        }
+        .unsubscribe {
+          margin-top: 20px;
+          font-size: 0.7em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Hi {{ .User.ContactName }} - Exclusive Deals Await You!</h1>
+        </div>
+        <div class="content">
+            <h2 class="section-title">Featured Products</h2>
+            <div class="product-grid">
+                {{ range .Parts }}
+                <div class="product-item">
+                    <img src="https://res.cloudinary.com/dz9ydmifl/image/upload/t_product_items/v1743590861/z88g_i6eg6m.jpg" alt="Air Filter">
+                    <h3>{{ .Title }}</h3>
+                    <p>{{ .Description }}</p>
+                    <p class="price">ZAR {{ .Price }}</p>
+                </div>
+                {{ end }}
+                </div>
+            <div style="text-align: center;">
+                <a href="https://mototrace.co.za/" class="cta-button">Visit Our Website Now</a>
+                <h3>Contact Us</h3>
+                <p>011 620 3071</p>
+                <p>011 620 3048</p>
+                <p>36 Ernest Oppenhiemer Avenue, New Times Square, Bruma, Johnannesburg, 2026.</p>
+ 
+            </div>
+        </div>
+        <div class="footer">
+            <p>This is a promotional email. Offers valid for a limited time.</p>
+            <p class="unsubscribe"><a href="your-unsubscribe-link">Unsubscribe</a></p>
+        </div>
+    </div>
+</body>
+</html>
