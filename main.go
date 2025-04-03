@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go-zoho-inventory/email"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -34,6 +36,10 @@ type ZohoResponse struct {
 	// Add other fields as needed
 }
 
+///======================================================================================================================================
+
+///======================================================================================================================================
+
 const (
 	zohoTokenURL  = "https://accounts.zoho.com/oauth/v2/token"
 	tokenFilePath = "./zoho_tokens.json" // Path to store tokens
@@ -47,6 +53,7 @@ var (
 	redirect_uri     string
 )
 
+// Run init function to initialize all sensitive information
 func init() {
 	err := godotenv.Load()
 	if err != nil {
@@ -65,21 +72,16 @@ func init() {
 
 }
 
-func refreshToken(refreshToken string) (TokenResponse, error) {
-	data := map[string]string{
-		"grant_type":    "refresh_token",
-		"client_id":     zohoClientID,
-		"client_secret": zohoClientSecret,
-		"refresh_token": refreshToken,
-		"redirect_uri":  redirect_uri,
-	}
-	zohoTokenURL1 := fmt.Sprintf("https://accounts.zoho.com/oauth/v2/token?refresh_token=%s&client_id=%s&client_secret=%s&redirect_uri=%s&grant_type=%s", refresh_token, zohoClientID, zohoClientSecret, redirect_uri, data["grant_type"])
-	jsonData, err := json.Marshal(data)
+// refresh token function
+func refreshToken() (TokenResponse, error) {
+
+	zohoTokenURL := fmt.Sprintf("https://accounts.zoho.com/oauth/v2/token?refresh_token=%s&client_id=%s&client_secret=%s&redirect_uri=%s&grant_type=%s", refresh_token, zohoClientID, zohoClientSecret, redirect_uri, "refresh_token")
+	jsonData, err := json.Marshal(TokenResponse{})
 	if err != nil {
 		return TokenResponse{}, err
 	}
 
-	resp, err := http.Post(zohoTokenURL1, "application/json", bytes.NewBuffer(jsonData))
+	resp, err := http.Post(zohoTokenURL, "application/json", bytes.NewReader(jsonData))
 	if err != nil {
 		return TokenResponse{}, err
 	}
@@ -103,6 +105,7 @@ func refreshToken(refreshToken string) (TokenResponse, error) {
 	return tokenResponse, nil
 }
 
+// load tokens function
 func loadTokens() (TokenStore, error) {
 	data, err := os.ReadFile(tokenFilePath)
 	if err != nil {
@@ -118,6 +121,7 @@ func loadTokens() (TokenStore, error) {
 	return tokens, nil
 }
 
+// save tokens to file function
 func saveTokens(tokens TokenStore) error {
 	jsonData, err := json.Marshal(tokens)
 	if err != nil {
@@ -132,6 +136,7 @@ func saveTokens(tokens TokenStore) error {
 	return nil
 }
 
+// gets access tokens from file function
 func getAccessToken() (string, error) {
 	tokens, err := loadTokens()
 	if err != nil {
@@ -142,7 +147,7 @@ func getAccessToken() (string, error) {
 		return tokens.AccessToken, nil
 	}
 
-	newToken, err := refreshToken(refresh_token)
+	newToken, err := refreshToken()
 	if err != nil {
 		return "", err
 	}
@@ -158,6 +163,7 @@ func getAccessToken() (string, error) {
 	return tokens.AccessToken, nil
 }
 
+// zoho request handler
 func zohoHandler(c *gin.Context) {
 	accessToken, err := getAccessToken()
 	if err != nil {
@@ -217,6 +223,9 @@ func zohoHandler(c *gin.Context) {
 func main() {
 	router := gin.Default()
 	router.Any("/zoho/*path", zohoHandler)
+	router.GET("/vehicles/:id", getModelAndVehicle)
+	router.GET("/parts/:id", getVehicleParts)
+	router.POST("/email-contact/", emailContact)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -225,3 +234,43 @@ func main() {
 	log.Printf("Server listening on port %s", port)
 	router.Run(":" + port)
 }
+
+// get Models and Vehicles by manufacturer id
+func getModelAndVehicle(c *gin.Context) {
+	id := c.Param("id")
+
+	filename := fmt.Sprintf("/vehicles/%s.json", id)
+	filePath := filepath.Join("./json", filename)
+	c.File(filePath)
+
+}
+
+// get parts using vehicle id
+func getVehicleParts(c *gin.Context) {
+	id := c.Param("id")
+
+	filename := fmt.Sprintf("/parts/%s.json", id)
+	filePath := filepath.Join("./json", filename)
+	c.File(filePath)
+}
+
+// email contact
+func emailContact(c *gin.Context) {
+	var newEmailContact email.UserEmail
+
+	if err := c.BindJSON(&newEmailContact); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	err := email.SendEmail(newEmailContact.User.Email, newEmailContact)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send email: " + err.Error()})
+		return
+	}
+
+	c.IndentedJSON(http.StatusCreated, gin.H{"success": "Email Sent Successfully"})
+}
+
+
+
